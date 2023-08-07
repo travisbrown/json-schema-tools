@@ -1,0 +1,18 @@
+[package]
+name = "json-schema-tools-cli"
+authors = ["Travis Brown <travisrobertbrown@gmail.com>"]
+repository = "https://github.com/travisbrown/json-schema-tools"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "json-schema-tools"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+json-schema-tools = { path = "../lib", version = "0.1.0" }
+log = "0.4"
+serde_json = { version = "1.0", features = ["preserve_order"] }
+simplelog = "0.12"
+thiserror = "1"

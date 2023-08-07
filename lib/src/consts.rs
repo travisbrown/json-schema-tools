@@ -1,0 +1,11 @@
+pub const ADDITIONAL_PROPERTIES_KEY: &str = "additionalProperties";
+pub const COMMENT_KEY: &str = "$comment";
+pub const DEFS_KEY: &str = "$defs";
+pub const DESCRIPTION_KEY: &str = "description";
+pub const EXAMPLES_KEY: &str = "examples";
+pub const ID_KEY: &str = "$id";
+pub const PROPERTIES_KEY: &str = "properties";
+pub const REF_KEY: &str = "$ref";
+pub const REQUIRED_KEY: &str = "required";
+pub const TITLE_KEY: &str = "title";
+pub const TYPE_KEY: &str = "type";
