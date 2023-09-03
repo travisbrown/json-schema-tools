@@ -1,8 +1,8 @@
 pub mod compose;
-mod consts;
+mod constants;
 pub mod key_order;
 pub mod lint;
 pub mod path;
-pub mod refs;
+pub mod reference;
 pub mod schema;
 mod util;

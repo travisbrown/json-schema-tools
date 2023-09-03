@@ -1,4 +1,4 @@
-use super::consts::DEFS_KEY;
+use super::constants::DEFS_KEY;
 use regex::Regex;
 use std::fmt::Display;
 use std::str::FromStr;

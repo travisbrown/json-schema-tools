@@ -2,76 +2,77 @@ use indexmap::map::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+/// A schema file that may contain a top-level schema and related definitions
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct File {
+pub struct SchemaFile {
     #[serde(flatten)]
     pub metadata: Metadata,
     #[serde(flatten)]
-    pub schema: Option<TypeDef>,
+    pub schema: Option<SchemaDef>,
     #[serde(rename = "$defs")]
-    pub definitions: Option<IndexMap<String, Type>>,
+    pub definitions: Option<IndexMap<String, Schema>>,
 }
 
-impl File {
-    pub fn objects(&self) -> Vec<(Vec<String>, Object)> {
+impl SchemaFile {
+    pub fn objects(&self) -> Vec<(Vec<String>, SchemaObject)> {
         let mut result = vec![];
 
         if let Some(schema) = &self.schema {
-            objects_rec(&Type::new(schema), &[], &mut result);
+            Self::objects_rec(&Schema::new(schema), &[], &mut result);
         }
 
         if let Some(definitions) = &self.definitions {
             for (key, value) in definitions {
-                objects_rec(value, &[key.clone()], &mut result);
+                Self::objects_rec(value, &[key.clone()], &mut result);
             }
         }
 
         result
     }
-}
 
-fn objects_rec(schema: &Type, path: &[String], acc: &mut Vec<(Vec<String>, Object)>) {
-    match &schema.schema {
-        TypeDef::NamedType(NamedType::Array { items }) => {
-            let mut new_path = path.to_vec();
-            new_path.push("array".to_string());
+    fn objects_rec(schema: &Schema, path: &[String], acc: &mut Vec<(Vec<String>, SchemaObject)>) {
+        match &schema.schema {
+            SchemaDef::Type(SchemaType::Array { items }) => {
+                let mut new_path = path.to_vec();
+                new_path.push("array".to_string());
 
-            objects_rec(items, &new_path, acc);
-        }
-        TypeDef::NamedType(other) => {
-            if let Some(object) = other.as_object() {
-                acc.push((path.to_vec(), object.clone()));
+                Self::objects_rec(items, &new_path, acc);
+            }
+            SchemaDef::Type(other) => {
+                if let Some(object) = other.as_object() {
+                    acc.push((path.to_vec(), object.clone()));
 
-                for (key, value) in &object.properties {
-                    let mut new_path = path.to_vec();
-                    new_path.push(key.clone());
+                    for (key, value) in &object.properties {
+                        let mut new_path = path.to_vec();
+                        new_path.push(key.clone());
 
-                    objects_rec(value, &new_path, acc);
+                        Self::objects_rec(value, &new_path, acc);
+                    }
                 }
             }
-        }
-        TypeDef::OneOf { value } => {
-            for (i, schema) in value.iter().enumerate() {
-                let mut new_path = path.to_vec();
-                new_path.push(format!("oneOf[{}]", i));
+            SchemaDef::OneOf { value } => {
+                for (i, schema) in value.iter().enumerate() {
+                    let mut new_path = path.to_vec();
+                    new_path.push(format!("oneOf[{}]", i));
 
-                objects_rec(schema, &new_path, acc);
+                    Self::objects_rec(schema, &new_path, acc);
+                }
             }
+            _ => {}
         }
-        _ => {}
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Type {
+pub struct Schema {
     #[serde(flatten)]
     pub metadata: Metadata,
     #[serde(flatten)]
-    pub schema: TypeDef,
+    pub schema: SchemaDef,
 }
 
-impl Type {
-    fn new(schema: &TypeDef) -> Self {
+impl Schema {
+    fn new(schema: &SchemaDef) -> Self {
         Self {
             metadata: Metadata::default(),
             schema: schema.clone(),
@@ -94,8 +95,8 @@ pub struct Metadata {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 #[serde(deny_unknown_fields)]
-pub enum TypeDef {
-    NamedType(NamedType),
+pub enum SchemaDef {
+    Type(SchemaType),
     Ref {
         #[serde(rename = "$ref")]
         value: String,
@@ -110,7 +111,7 @@ pub enum TypeDef {
     },
     OneOf {
         #[serde(rename = "oneOf")]
-        value: Vec<Type>,
+        value: Vec<Schema>,
     },
     Empty {},
 }
@@ -118,7 +119,9 @@ pub enum TypeDef {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 #[serde(deny_unknown_fields)]
-pub enum NamedType {
+pub enum SchemaType {
+    #[serde(rename = "null")]
+    Null {},
     #[serde(rename = "boolean")]
     Boolean {},
     #[serde(rename = "string")]
@@ -134,50 +137,41 @@ pub enum NamedType {
         maximum: Option<f64>,
     },
     #[serde(rename = "array")]
-    Array { items: Box<Type> },
+    Array { items: Box<Schema> },
     #[serde(rename = "object")]
-    Object {
-        #[serde(
-            rename = "additionalProperties",
-            default = "additional_properties_default",
-            skip_serializing_if = "additional_properties_is_default"
-        )]
-        additional_properties: bool,
-        #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
-        properties: IndexMap<String, Type>,
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        required: Vec<String>,
-    },
+    Object(SchemaObject),
 }
 
-impl NamedType {
-    fn as_object(&self) -> Option<Object> {
+impl SchemaType {
+    fn as_object(&self) -> Option<SchemaObject> {
         match self {
-            Self::Object {
-                additional_properties,
-                properties,
-                required,
-            } => Some(Object {
-                additional_properties: *additional_properties,
-                properties: properties.clone(),
-                required: required.clone(),
-            }),
+            Self::Object(object) => Some(object.clone()),
             _ => None,
         }
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Object {
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SchemaObject {
+    #[serde(
+        rename = "additionalProperties",
+        default = "SchemaObject::additional_properties_default",
+        skip_serializing_if = "SchemaObject::additional_properties_is_default"
+    )]
     pub additional_properties: bool,
-    pub properties: IndexMap<String, Type>,
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub properties: IndexMap<String, Schema>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub required: Vec<String>,
 }
 
-fn additional_properties_default() -> bool {
-    true
-}
+impl SchemaObject {
+    fn additional_properties_default() -> bool {
+        true
+    }
 
-fn additional_properties_is_default(value: &bool) -> bool {
-    *value
+    fn additional_properties_is_default(value: &bool) -> bool {
+        *value
+    }
 }

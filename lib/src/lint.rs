@@ -1,4 +1,4 @@
-use super::schema::File;
+use super::schema::SchemaFile;
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ pub fn lint(schema_file_value: &Value) -> Vec<Issue> {
         result.push(Issue::MisorderedKeys(key_order_mismatch));
     }
 
-    match serde_json::from_value::<File>(schema_file_value.clone()) {
+    match serde_json::from_value::<SchemaFile>(schema_file_value.clone()) {
         Ok(schema_file) => {
             for (path, object) in schema_file.objects() {
                 if object.additional_properties {

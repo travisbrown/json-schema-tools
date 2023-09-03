@@ -1,4 +1,4 @@
-use super::{consts::*, path::Path};
+use super::{constants::*, path::Path};
 use serde_json::Value;
 use std::cmp::Ordering;
 
@@ -12,7 +12,7 @@ pub struct KeyOrderMismatch<'a> {
 pub fn check_key_order(value: &Value) -> Vec<KeyOrderMismatch> {
     super::util::nodes_with_path(value)
         .iter()
-        .filter(|(path, _)| !path.has_free_keys())
+        .filter(|(path, _)| !path.allows_arbitrary_keys())
         .filter_map(|(path, value)| {
             value.as_object().and_then(|fields| {
                 let keys = fields.keys().map(|key| Key(key)).collect::<Vec<_>>();

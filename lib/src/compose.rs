@@ -1,4 +1,4 @@
-use super::{consts::*, refs::Reference};
+use super::{constants::*, reference::Reference};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -9,7 +9,7 @@ pub enum Error {
     #[error("Invalid sub-schema ID")]
     InvalidId(String),
     #[error("Invalid reference")]
-    InvalidRef(#[from] super::refs::Error),
+    InvalidRef(#[from] super::reference::Error),
     #[error("Missing $defs in base schema")]
     MissingDefs(Value),
 }

@@ -1,4 +1,4 @@
-use super::consts::{DEFS_KEY, PROPERTIES_KEY};
+use super::constants::{DEFS_KEY, PROPERTIES_KEY};
 use std::fmt::Display;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,7 +41,7 @@ impl<'a> Path<'a> {
     }
 
     /// This path points to a JSON object with arbitrary keys
-    pub fn has_free_keys(&self) -> bool {
+    pub fn allows_arbitrary_keys(&self) -> bool {
         self.entries
             .last()
             .filter(|entry| matches!(entry, Entry::Key(PROPERTIES_KEY) | Entry::Key(DEFS_KEY)))
