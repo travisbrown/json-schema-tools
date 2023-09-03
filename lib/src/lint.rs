@@ -20,7 +20,7 @@ pub fn lint(schema_file_value: &Value) -> Vec<Issue> {
     match serde_json::from_value::<SchemaFile>(schema_file_value.clone()) {
         Ok(schema_file) => {
             for (path, object) in schema_file.objects() {
-                if object.additional_properties {
+                if !object.no_additional_properties() {
                     result.push(Issue::UnrestrictedProperties(path.clone()));
                 }
 

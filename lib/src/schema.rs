@@ -32,7 +32,7 @@ impl SchemaFile {
 
     fn objects_rec(schema: &Schema, path: &[String], acc: &mut Vec<(Vec<String>, SchemaObject)>) {
         match &schema.schema {
-            SchemaDef::Type(SchemaType::Array { items }) => {
+            SchemaDef::Type(SchemaType::Array { items, .. }) => {
                 let mut new_path = path.to_vec();
                 new_path.push("array".to_string());
 
@@ -54,6 +54,22 @@ impl SchemaFile {
                 for (i, schema) in value.iter().enumerate() {
                     let mut new_path = path.to_vec();
                     new_path.push(format!("oneOf[{}]", i));
+
+                    Self::objects_rec(schema, &new_path, acc);
+                }
+            }
+            SchemaDef::AnyOf { value } => {
+                for (i, schema) in value.iter().enumerate() {
+                    let mut new_path = path.to_vec();
+                    new_path.push(format!("anyOf[{}]", i));
+
+                    Self::objects_rec(schema, &new_path, acc);
+                }
+            }
+            SchemaDef::AllOf { value } => {
+                for (i, schema) in value.iter().enumerate() {
+                    let mut new_path = path.to_vec();
+                    new_path.push(format!("allOf[{}]", i));
 
                     Self::objects_rec(schema, &new_path, acc);
                 }
@@ -113,6 +129,14 @@ pub enum SchemaDef {
         #[serde(rename = "oneOf")]
         value: Vec<Schema>,
     },
+    AnyOf {
+        #[serde(rename = "anyOf")]
+        value: Vec<Schema>,
+    },
+    AllOf {
+        #[serde(rename = "allOf")]
+        value: Vec<Schema>,
+    },
     Empty {},
 }
 
@@ -137,7 +161,13 @@ pub enum SchemaType {
         maximum: Option<f64>,
     },
     #[serde(rename = "array")]
-    Array { items: Box<Schema> },
+    Array {
+        items: Box<Schema>,
+        #[serde(rename = "minItems")]
+        min_items: Option<usize>,
+        #[serde(rename = "maxItems")]
+        max_items: Option<usize>,
+    },
     #[serde(rename = "object")]
     Object(SchemaObject),
 }
@@ -154,12 +184,8 @@ impl SchemaType {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SchemaObject {
-    #[serde(
-        rename = "additionalProperties",
-        default = "SchemaObject::additional_properties_default",
-        skip_serializing_if = "SchemaObject::additional_properties_is_default"
-    )]
-    pub additional_properties: bool,
+    #[serde(rename = "additionalProperties", default)]
+    pub additional_properties: AdditionalProperties,
     #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
     pub properties: IndexMap<String, Schema>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -167,11 +193,24 @@ pub struct SchemaObject {
 }
 
 impl SchemaObject {
-    fn additional_properties_default() -> bool {
-        true
+    pub fn no_additional_properties(&self) -> bool {
+        matches!(
+            self.additional_properties,
+            AdditionalProperties::Boolean(false)
+        )
     }
+}
 
-    fn additional_properties_is_default(value: &bool) -> bool {
-        *value
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+#[serde(deny_unknown_fields)]
+pub enum AdditionalProperties {
+    Boolean(bool),
+    Schema(Box<Schema>),
+}
+
+impl Default for AdditionalProperties {
+    fn default() -> Self {
+        Self::Boolean(true)
     }
 }
