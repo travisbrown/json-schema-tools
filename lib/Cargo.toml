@@ -2,6 +2,11 @@
 name = "json-schema-tools"
 authors = ["Travis Brown <travisrobertbrown@gmail.com>"]
 repository = "https://github.com/travisbrown/json-schema-tools"
+homepage = "https://github.com/travisbrown/json-schema-tools"
+description = "JSON Schema code generation tools for Rust"
+keywords = ["json", "json-schema"]
+license-file = "../LICENSE"
+readme = "../README.md"
 version = "0.1.0"
 edition = "2021"
 
