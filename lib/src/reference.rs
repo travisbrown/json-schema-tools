@@ -1,11 +1,11 @@
 use super::constants::DEFS_KEY;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fmt::Display;
 use std::str::FromStr;
 
-lazy_static::lazy_static! {
-    static ref REF_PATTERN: Regex = Regex::new(r"^(?:((?:/\w+)*)/(\w+))?(?:#/\$defs/(\w+))?$").unwrap();
-}
+static REF_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:((?:/\w+)*)/(\w+))?(?:#/\$defs/(\w+))?$").unwrap());
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum UnsupportedRefReason {
