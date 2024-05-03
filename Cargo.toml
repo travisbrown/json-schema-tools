@@ -1,6 +1,21 @@
 [workspace]
-
+resolver = "2"
 members = [
     "cli",
     "lib",
 ]
+
+[workspace.package]
+authors = ["Travis Brown <travisrobertbrown@gmail.com>"]
+description = "JSON Schema code generation tools for Rust"
+keywords = ["json", "json-schema"]
+repository = "https://github.com/travisbrown/json-schema-tools"
+homepage = "https://github.com/travisbrown/json-schema-tools"
+readme = "README.md"
+license = "GPL-3.0-only"
+edition = "2021"
+version = "0.1.0"
+
+[workspace.dependencies]
+serde_json = { version = "1.0", features = ["preserve_order"] }
+thiserror = "1"

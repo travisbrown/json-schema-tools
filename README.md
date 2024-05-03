@@ -10,9 +10,8 @@ This project includes a small Rust library and command-line tool that do two thi
 In both cases only a small subset of schemas are supported (the ones I need for my own use cases).
 
 # License
+This software is published under the [GNU General Public License v3.0][gplv3].
 
-This software is published under the [Anti-Capitalist Software License][acsl] (v. 1.4).
-
-[acsl]: https://anticapitalist.software/
+[gplv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [json-schemas]: https://json-schema.org/
 [typify]: https://github.com/oxidecomputer/typify
