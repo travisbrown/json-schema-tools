@@ -17,5 +17,5 @@ edition = "2021"
 version = "0.1.0"
 
 [workspace.dependencies]
-serde_json = { version = "1.0", features = ["preserve_order"] }
-thiserror = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+thiserror = "2"
